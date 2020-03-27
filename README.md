@@ -12,4 +12,5 @@ func main() {
     link := supcomgo.GetLatestDroplistLink()
     items := supcomgo.ScrapeDroplist(link)
     SendDroplist(items, webhook)
-}```
+}
+```
