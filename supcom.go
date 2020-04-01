@@ -1,7 +1,9 @@
 package supcomgo
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -28,6 +30,7 @@ var Headers = map[string]string{
 }
 var Client = &http.Client{}
 
+//DropItem is a struct for an item of the droplist
 type DropItem struct {
 	Name        string `json:"name"`
 	Image       string `json:"image"`
@@ -38,19 +41,23 @@ type DropItem struct {
 	Link        string `json:"link,omitempty"`
 }
 
+//Price is a struct for prices on an item
 type Price struct {
 	FullPrice   string `json:"full_price"`
 	DollarPrice string `json:"dollar_price"`
 	PoundsPrice string `json:"pounds_price"`
 }
 
+//Votes is a struct for votes on an item
 type Votes struct {
 	Upvotes   string `json:"upvotes"`
 	Downvotes string `json:"downvotes"`
 }
 
+//Droplist is an array of DropItem's
 type Droplist []DropItem
 
+//GetLatestDroplistLink returns the latest droplist link on SupremeCommunity
 func GetLatestDroplistLink() string {
 	req, reqErr := http.NewRequest("GET", "https://www.supremecommunity.com/season/spring-summer2020/droplists/", nil)
 	if reqErr != nil {
@@ -70,13 +77,14 @@ func GetLatestDroplistLink() string {
 	}
 
 	link, _ := doc.Find(".block").Attr("href")
-	return link
+	return fmt.Sprintf("https://www.supremecommunity.com%s", link)
 }
 
+//ScrapeDroplist scrapes the droplsit from the link provided
 func ScrapeDroplist(link string) Droplist {
 	var list Droplist
 
-	req, reqErr := http.NewRequest("GET", fmt.Sprintf("https://www.supremecommunity.com%s", link), nil)
+	req, reqErr := http.NewRequest("GET", link, nil)
 	if reqErr != nil {
 		fmt.Println(reqErr)
 	}
@@ -124,13 +132,14 @@ func ScrapeDroplist(link string) Droplist {
 		Item.Price.FullPrice = fmt.Sprintf("%s / %s", Item.Price.DollarPrice, Item.Price.PoundsPrice)
 		Item.Votes.Upvotes = s.Find("div.progress-bar.progress-bar-success").Text()
 		Item.Votes.Downvotes = s.Find("div.progress-bar.progress-bar-danger").Text()
-		Item.Link = fmt.Sprintf("https://www.supremecommunity.com%s", link)
+		Item.Link = link
 
 		list = append(list, Item)
 	})
 	return list
 }
 
+//SendDroplist sends the droplist to a provided webhook
 func SendDroplist(items Droplist, webhook string) {
 	for _, item := range items {
 		e := discord.NewEmbed(item.Name, item.Description, item.Link)
@@ -143,4 +152,25 @@ func SendDroplist(items Droplist, webhook string) {
 		e.SendToWebhook(webhook)
 		time.Sleep(500 * time.Millisecond)
 	}
+}
+
+//ConvertToJSON converts a given droplist to JSON
+//Returns []byte
+func ConvertToJSON(items Droplist) ([]byte, error) {
+	data, err := json.Marshal(items)
+	return data, err
+}
+
+//SaveAsJSON saves a given Droplist item to a given path as JSON
+//Returns error
+func SaveAsJSON(items Droplist, path string) error {
+	data, marshalError := json.Marshal(items)
+	if marshalError != nil {
+		return marshalError
+	}
+	saveError := ioutil.WriteFile(path, data, 0644)
+	if saveError != nil {
+		return saveError
+	}
+	return nil
 }
