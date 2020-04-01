@@ -16,7 +16,7 @@ import (
 const thumbsDown = ":thumbsdown:"
 const thumbsUp = ":thumbsup:"
 
-var Headers = map[string]string{
+var headers = map[string]string{
 	"authority":                 "www.supremecommunity.com",
 	"cache-control":             "max-age=0",
 	"upgrade-insecure-requests": "1",
@@ -28,7 +28,7 @@ var Headers = map[string]string{
 	"sec-fetch-user":            "?1",
 	"accept-language":           "en-US,en;q=0.9",
 }
-var Client = &http.Client{}
+var client = &http.Client{}
 
 //DropItem is a struct for an item of the droplist
 type DropItem struct {
@@ -63,10 +63,10 @@ func GetLatestDroplistLink() string {
 	if reqErr != nil {
 		fmt.Println(reqErr)
 	}
-	for k, v := range Headers {
+	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
-	res, resErr := Client.Do(req)
+	res, resErr := client.Do(req)
 	if resErr != nil {
 		fmt.Println(resErr)
 	}
@@ -88,10 +88,10 @@ func ScrapeDroplist(link string) Droplist {
 	if reqErr != nil {
 		fmt.Println(reqErr)
 	}
-	for k, v := range Headers {
+	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
-	res, resErr := Client.Do(req)
+	res, resErr := client.Do(req)
 	defer res.Body.Close()
 	if resErr != nil {
 		fmt.Println(resErr)
