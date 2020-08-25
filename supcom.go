@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	discord "supcomgo/embeds"
+	discord "github.com/aiomonitors/supcomgo/embeds"
 
 	"github.com/PuerkitoBio/goquery"
 )
